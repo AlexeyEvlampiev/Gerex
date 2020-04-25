@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30002.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gerex", "src\Gerex\Gerex.csproj", "{D6C5198C-9349-4466-B154-F28E4FBD731A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{2606972B-C937-4442-8802-DF4F7A9EDCF5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XUnitTest.Gerex", "test\XUnitTest.Gerex\XUnitTest.Gerex.csproj", "{435B525B-B259-453A-9FE7-182D69DCEA40}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XIntegrationTest.Gerex", "test\XIntegrationTest.Gerex\XIntegrationTest.Gerex.csproj", "{545716ED-8CC0-4B1C-B64A-558FE0586D11}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6C5198C-9349-4466-B154-F28E4FBD731A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6C5198C-9349-4466-B154-F28E4FBD731A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6C5198C-9349-4466-B154-F28E4FBD731A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6C5198C-9349-4466-B154-F28E4FBD731A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{435B525B-B259-453A-9FE7-182D69DCEA40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{435B525B-B259-453A-9FE7-182D69DCEA40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{435B525B-B259-453A-9FE7-182D69DCEA40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{435B525B-B259-453A-9FE7-182D69DCEA40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{545716ED-8CC0-4B1C-B64A-558FE0586D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{545716ED-8CC0-4B1C-B64A-558FE0586D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{545716ED-8CC0-4B1C-B64A-558FE0586D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{545716ED-8CC0-4B1C-B64A-558FE0586D11}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{435B525B-B259-453A-9FE7-182D69DCEA40} = {2606972B-C937-4442-8802-DF4F7A9EDCF5}
+		{545716ED-8CC0-4B1C-B64A-558FE0586D11} = {2606972B-C937-4442-8802-DF4F7A9EDCF5}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {64C3BD77-C618-4ABF-A719-59C7C86D393B}
+	EndGlobalSection
+EndGlobal
