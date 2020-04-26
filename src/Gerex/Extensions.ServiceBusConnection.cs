@@ -3,22 +3,34 @@
     using System;
     using System.Reactive;
     using System.Reactive.Disposables;
+    using System.Reactive.Linq;
+    using System.Reactive.Threading.Tasks;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Azure.ServiceBus;
 
     public static partial class Extensions
     {
+        public static IHandlerRegistration<T> ProcessMessages<T>(this ServiceBusConnection self,
+            Func<Message, CancellationToken, IObservable<T>> handler)
+        {
+            if (self == null) throw new ArgumentNullException(nameof(self));
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+            return new Builder<T>(self, handler);
+        }
+
         public static IHandlerRegistration<Unit> ProcessMessages(this ServiceBusConnection self,
             Func<Message, CancellationToken, Task> handler)
         {
             if (self == null) throw new ArgumentNullException(nameof(self));
             if (handler == null) throw new ArgumentNullException(nameof(handler));
-            return new Builder<Unit>(self, async (msg, ct) =>
+
+            IObservable<Unit> ProcessAll(Message message, CancellationToken token)
             {
-                await handler.Invoke(msg, ct);
-                return Unit.Default;
-            });
+                return handler.Invoke(message, token).ToObservable();
+            }
+
+            return new Builder<Unit>(self, ProcessAll);
         }
 
 
@@ -27,11 +39,15 @@
         {
             if (self == null) throw new ArgumentNullException(nameof(self));
             if (handler == null) throw new ArgumentNullException(nameof(handler));
-            return new Builder<T>(self, async (msg, ct) =>
+            if (self == null) throw new ArgumentNullException(nameof(self));
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+
+            IObservable<T> ProcessAll(Message message, CancellationToken token)
             {
-                var result = await handler.Invoke(msg, ct);
-                return result;
-            });
+                return handler.Invoke(message, token).ToObservable();
+            }
+
+            return new Builder<T>(self, ProcessAll);
         }
 
         public interface IHandlerRegistration<T>
@@ -51,16 +67,19 @@
         sealed class Builder<T> : ObservableBase<T>, IHandlerRegistration<T>, ISubscriptionRegistration<T>
         {
             private readonly ServiceBusConnection _connection;
-            private readonly Func<Message, CancellationToken, Task<T>> _handler;
             private Func<SubscriptionClient> _subscriptionClientFactory;
+            private Func<Message, CancellationToken, IObservable<T>> _messageHandler;
             private Func<ExceptionReceivedEventArgs, Task> _errorHandler;
             private readonly MessageHandlerReducedOptions _reducedOptions = new MessageHandlerReducedOptions();
 
 
-            internal Builder(ServiceBusConnection connection, Func<Message, CancellationToken, Task<T>> handler)
+
+            public Builder(
+                ServiceBusConnection connection, 
+                Func<Message, CancellationToken, IObservable<T>> handler)
             {
-                _connection = connection;
-                _handler = handler;
+                _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+                _messageHandler = handler ?? throw new ArgumentNullException(nameof(handler));
             }
 
             ISubscriptionRegistration<T> IHandlerRegistration<T>.FromSubscription(
@@ -106,8 +125,10 @@
                 client.RegisterMessageHandler(
                     async (message, token) =>
                     {
-                        var result = await _handler.Invoke(message, token);
-                        observer.OnNext(result);
+                        await _messageHandler
+                            .Invoke(message, token)
+                            .Do(observer.OnNext)
+                            .LastOrDefaultAsync();
                     }, options);
 
    
