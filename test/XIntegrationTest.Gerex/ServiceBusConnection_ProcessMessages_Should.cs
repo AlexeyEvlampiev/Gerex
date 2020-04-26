@@ -14,7 +14,8 @@ namespace Gerex
 
     public class ServiceBusConnection_ProcessMessages_Should
     {
-        private readonly IObservable<int> _cleanUp;
+        private readonly IObservable<int> _subscriptionCleanUp;
+        private readonly IObservable<int> _queueCleanUp;
 
         public ServiceBusConnection_ProcessMessages_Should()
         {
@@ -22,12 +23,20 @@ namespace Gerex
             var connection = new ServiceBusConnection(ConnectionString);
        
 
-            _cleanUp = connection
+            _subscriptionCleanUp = connection
                 .ProcessMessages((m, ct) => Task.CompletedTask)
                 .FromSubscription(TopicName, SubscriptionName, ReceiveMode.PeekLock, RetryPolicy.Default)
                 .Take(TimeSpan.FromMilliseconds(300))
                 .Count()
                 .Do(count=> Debug.WriteLine($"Deleted {count} messages"))
+                .LastOrDefaultAsync();
+
+            _queueCleanUp = connection
+                .ProcessMessages((m, ct) => Task.CompletedTask)
+                .FromQueue(QueueName, ReceiveMode.PeekLock, RetryPolicy.Default)
+                .Take(TimeSpan.FromMilliseconds(300))
+                .Count()
+                .Do(count => Debug.WriteLine($"Deleted {count} messages"))
                 .LastOrDefaultAsync();
         }
 
@@ -35,10 +44,10 @@ namespace Gerex
 
 
         [Fact]
-        public async Task ProcessAll()
+        public async Task ProcessSubscription()
         {
             Debug.WriteLine("Cleaning the subscription...");
-            await _cleanUp;
+            await _subscriptionCleanUp;
 
             var connection = new ServiceBusConnection(ConnectionString);
             var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
@@ -66,10 +75,41 @@ namespace Gerex
         }
 
         [Fact]
+        public async Task ProcessQueue()
+        {
+            Debug.WriteLine("Cleaning the subscription...");
+            await _queueCleanUp;
+
+            var connection = new ServiceBusConnection(ConnectionString);
+            var queue = new QueueClient(connection, QueueName, ReceiveMode.PeekLock, RetryPolicy.Default);
+
+            await Observable
+                .Range(0, 3)
+                .Select(i => Encoding.UTF8.GetBytes($"Message {i}"))
+                .SelectMany(body => queue.SendAsync(new Message(body)).ToObservable());
+
+            var received = await connection
+                .ProcessMessages((message, ct) =>
+                {
+                    var text = Encoding.UTF8.GetString(message.Body);
+                    return Task.FromResult(text);
+                })
+                .FromQueue(QueueName, ReceiveMode.PeekLock, RetryPolicy.Default)
+                .Take(TimeSpan.FromSeconds(1))
+                .ToList();
+
+
+            Assert.Equal(3, received.Count);
+            await Observable
+                .Range(0, 3)
+                .Do(i => Assert.Contains($"Message {i}", received));
+        }
+
+        [Fact]
         public async Task ObserveUnhandledExceptions()
         {
             Debug.WriteLine("Cleaning the subscription...");
-            await _cleanUp;
+            await _subscriptionCleanUp;
 
             var connection = new ServiceBusConnection(ConnectionString);
             var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
@@ -94,7 +134,7 @@ namespace Gerex
         public async Task DelegateErrorHandlingIfConfigured()
         {
             Debug.WriteLine("Cleaning the subscription...");
-            await _cleanUp;
+            await _subscriptionCleanUp;
 
             var connection = new ServiceBusConnection(ConnectionString);
             var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);

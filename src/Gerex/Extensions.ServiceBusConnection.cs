@@ -9,6 +9,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Azure.ServiceBus;
+    using Microsoft.Azure.ServiceBus.Core;
 
     public static partial class Extensions
     {
@@ -54,21 +55,22 @@
         public interface IHandlerRegistration<T>
         {
 
-            ISubscriptionRegistration<T> FromSubscription(string topic, string subscription, ReceiveMode receiveMode, RetryPolicy retryPolicy = null);
+            IReceiverRegistration<T> FromSubscription(string topic, string subscription, ReceiveMode receiveMode, RetryPolicy retryPolicy = null);
 
+            IReceiverRegistration<T> FromQueue(string queueName, ReceiveMode peekLock, RetryPolicy @default);
         }
 
-        public interface ISubscriptionRegistration<T> : IObservable<T>
+        public interface IReceiverRegistration<T> : IObservable<T>
         {
             IObservable<T> WithErrorHandler(Func<ExceptionReceivedEventArgs, Task> handler);
             IObservable<T> WithOptions(Action<MessageHandlerReducedOptions> config);
         }
 
 
-        sealed class Builder<T> : ObservableBase<T>, IHandlerRegistration<T>, ISubscriptionRegistration<T>
+        sealed class Builder<T> : ObservableBase<T>, IHandlerRegistration<T>, IReceiverRegistration<T>
         {
             private readonly ServiceBusConnection _connection;
-            private Func<SubscriptionClient> _subscriptionClientFactory;
+            private Func<IReceiverClient> _receiverClientFactory;
             private Func<Message, CancellationToken, IObservable<T>> _messageHandler;
             private Func<ExceptionReceivedEventArgs, Task> _errorHandler;
             private readonly MessageHandlerReducedOptions _reducedOptions = new MessageHandlerReducedOptions();
@@ -85,13 +87,19 @@
 
 
             [DebuggerStepThrough]
-            ISubscriptionRegistration<T> IHandlerRegistration<T>.FromSubscription(
+            IReceiverRegistration<T> IHandlerRegistration<T>.FromSubscription(
                 string topic, 
                 string subscription, 
                 ReceiveMode receiveMode,
                 RetryPolicy retryPolicy)
             {
-                _subscriptionClientFactory = ()=> new SubscriptionClient(_connection, topic, subscription, receiveMode, retryPolicy);
+                _receiverClientFactory = ()=> new SubscriptionClient(_connection, topic, subscription, receiveMode, retryPolicy);
+                return this;
+            }
+
+            IReceiverRegistration<T> IHandlerRegistration<T>.FromQueue(string queueName, ReceiveMode receiveMode, RetryPolicy retryPolicy)
+            {
+                _receiverClientFactory = ()=> new QueueClient(_connection, queueName, receiveMode, retryPolicy);
                 return this;
             }
 
@@ -104,7 +112,7 @@
             }
 
             [DebuggerStepThrough]
-            IObservable<T> ISubscriptionRegistration<T>.WithOptions(Action<MessageHandlerReducedOptions> config)
+            IObservable<T> IReceiverRegistration<T>.WithOptions(Action<MessageHandlerReducedOptions> config)
             {
                 config?.Invoke(_reducedOptions);
                 return this;
@@ -112,7 +120,7 @@
 
             protected override IDisposable SubscribeCore(IObserver<T> observer)
             {
-                var client = _subscriptionClientFactory.Invoke();
+                var client = _receiverClientFactory.Invoke();
                 var options = new MessageHandlerOptions(async args =>
                 {
                     if (_errorHandler == null)
