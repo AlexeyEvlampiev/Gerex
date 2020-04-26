@@ -13,11 +13,18 @@ namespace Gerex
 
     public class ServiceBusConnection_ProcessMessages_Should
     {
-        [Fact]
-        public async Task Work()
+        public ServiceBusConnection_ProcessMessages_Should()
         {
-            var config = Configurations.Instance;
-            var connection = new ServiceBusConnection(config.ConnectionString);
+            ConnectionString = Configurations.Instance.ConnectionString;
+        }
+
+        public string ConnectionString { get; }
+
+
+        [Fact]
+        public async Task ProcessAll()
+        {
+            var connection = new ServiceBusConnection(ConnectionString);
             var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
 
             await Observable
@@ -40,7 +47,28 @@ namespace Gerex
             await Observable
                 .Range(0, 3)
                 .Do(i => Assert.Contains($"Message {i}", received));
-
         }
+
+        [Fact]
+        public async Task ObserveUnhandledExceptions()
+        {
+            var connection = new ServiceBusConnection(ConnectionString);
+            var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
+
+            await topic.SendAsync(new Message(Encoding.UTF8.GetBytes("Hello world")));
+
+            var processing = connection
+                .ProcessMessages((message, ct) => throw new Exception("Test error")
+                {
+                    Data = {["Comment"] = "Test"}
+                })
+                .FromSubscription(TopicName, SubscriptionName, ReceiveMode.PeekLock, RetryPolicy.Default);
+
+
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await processing);
+            Assert.True(exception.Data.Contains("Comment"));
+            Assert.Equal("Test", exception.Data["Comment"]);
+        }
+
     }
 }
