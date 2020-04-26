@@ -47,7 +47,10 @@
         {
             if (false == await management.TopicExistsAsync(TopicName))
             {
-                await management.CreateTopicAsync(TopicName);
+                await management.CreateTopicAsync(new TopicDescription(TopicName)
+                {
+                    AutoDeleteOnIdle = TimeSpan.FromMinutes(10)
+                });
             }
 
             if (false == await management.SubscriptionExistsAsync(TopicName, SubscriptionName))

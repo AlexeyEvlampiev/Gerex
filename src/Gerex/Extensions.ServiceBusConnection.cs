@@ -22,6 +22,18 @@
         }
 
 
+        public static IHandlerRegistration<T> ProcessMessages<T>(this ServiceBusConnection self,
+            Func<Message, CancellationToken, Task<T>> handler)
+        {
+            if (self == null) throw new ArgumentNullException(nameof(self));
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+            return new Builder<T>(self, async (msg, ct) =>
+            {
+                var result = await handler.Invoke(msg, ct);
+                return result;
+            });
+        }
+
         public interface IHandlerRegistration<T>
         {
 
