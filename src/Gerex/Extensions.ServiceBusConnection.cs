@@ -44,6 +44,7 @@
         public interface ISubscriptionRegistration<T> : IObservable<T>
         {
             IObservable<T> WithErrorHandler(Func<ExceptionReceivedEventArgs, Task> handler);
+            IObservable<T> WithOptions(Action<MessageHandlerReducedOptions> config);
         }
 
 
@@ -53,6 +54,7 @@
             private readonly Func<Message, CancellationToken, Task<T>> _handler;
             private Func<SubscriptionClient> _subscriptionClientFactory;
             private Func<ExceptionReceivedEventArgs, Task> _errorHandler;
+            private readonly MessageHandlerReducedOptions _reducedOptions = new MessageHandlerReducedOptions();
 
 
             internal Builder(ServiceBusConnection connection, Func<Message, CancellationToken, Task<T>> handler)
@@ -79,25 +81,36 @@
                 return this;
             }
 
+            IObservable<T> ISubscriptionRegistration<T>.WithOptions(Action<MessageHandlerReducedOptions> config)
+            {
+                config?.Invoke(_reducedOptions);
+                return this;
+            }
+
             protected override IDisposable SubscribeCore(IObserver<T> observer)
             {
                 var client = _subscriptionClientFactory.Invoke();
+                var options = new MessageHandlerOptions(async args =>
+                {
+                    if (_errorHandler == null)
+                    {
+                        observer.OnError(args.Exception);
+                        return;
+                    }
+                    await _errorHandler.Invoke(args);
+                });
+
+                options.MaxConcurrentCalls = _reducedOptions.MaxConcurrentCalls.GetValueOrDefault(options.MaxConcurrentCalls);
+                options.MaxAutoRenewDuration = _reducedOptions.MaxAutoRenewDuration.GetValueOrDefault(options.MaxAutoRenewDuration);
+
                 client.RegisterMessageHandler(
                     async (message, token) =>
                     {
                         var result = await _handler.Invoke(message, token);
                         observer.OnNext(result);
-                    }, 
-                    new MessageHandlerOptions(async args =>
-                    {
-                        if (_errorHandler == null)
-                        {
-                            observer.OnError(args.Exception);
-                            return;
-                        }
+                    }, options);
 
-                        await _errorHandler.Invoke(args);
-                    }));
+   
                 return Disposable.Create(() => client.CloseAsync().GetAwaiter().GetResult());
             }
         }

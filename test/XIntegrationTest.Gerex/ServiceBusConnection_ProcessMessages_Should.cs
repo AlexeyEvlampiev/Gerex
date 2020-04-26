@@ -3,6 +3,8 @@
 namespace Gerex
 {
     using System;
+    using System.Diagnostics;
+    using System.Reactive;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Text;
@@ -13,9 +15,21 @@ namespace Gerex
 
     public class ServiceBusConnection_ProcessMessages_Should
     {
+        private readonly IObservable<int> _cleanUp;
+
         public ServiceBusConnection_ProcessMessages_Should()
         {
             ConnectionString = Configurations.Instance.ConnectionString;
+            var connection = new ServiceBusConnection(ConnectionString);
+       
+
+            _cleanUp = connection
+                .ProcessMessages((m, ct) => Task.CompletedTask)
+                .FromSubscription(TopicName, SubscriptionName, ReceiveMode.PeekLock, RetryPolicy.Default)
+                .Take(TimeSpan.FromMilliseconds(300))
+                .Count()
+                .Do(count=> Debug.WriteLine($"Deleted {count} messages"))
+                .LastOrDefaultAsync();
         }
 
         public string ConnectionString { get; }
@@ -24,6 +38,9 @@ namespace Gerex
         [Fact]
         public async Task ProcessAll()
         {
+            Debug.WriteLine("Cleaning the subscription...");
+            await _cleanUp;
+
             var connection = new ServiceBusConnection(ConnectionString);
             var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
 
@@ -52,6 +69,9 @@ namespace Gerex
         [Fact]
         public async Task ObserveUnhandledExceptions()
         {
+            Debug.WriteLine("Cleaning the subscription...");
+            await _cleanUp;
+
             var connection = new ServiceBusConnection(ConnectionString);
             var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
 
@@ -74,6 +94,9 @@ namespace Gerex
         [Fact]
         public async Task DelegateErrorHandlingIfConfigured()
         {
+            Debug.WriteLine("Cleaning the subscription...");
+            await _cleanUp;
+
             var connection = new ServiceBusConnection(ConnectionString);
             var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
 
