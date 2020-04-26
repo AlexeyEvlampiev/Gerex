@@ -70,5 +70,29 @@ namespace Gerex
             Assert.Equal("Test", exception.Data["Comment"]);
         }
 
+
+        [Fact]
+        public async Task DelegateErrorHandlingIfConfigured()
+        {
+            var connection = new ServiceBusConnection(ConnectionString);
+            var topic = new TopicClient(connection, TopicName, RetryPolicy.Default);
+
+            await topic.SendAsync(new Message(Encoding.UTF8.GetBytes("Hello world")));
+
+            await connection
+                .ProcessMessages((message, ct) => throw new Exception("Test error")
+                {
+                    Data = { ["Comment"] = "Test" }
+                })
+                .FromSubscription(TopicName, SubscriptionName, ReceiveMode.PeekLock, RetryPolicy.Default)
+                .WithErrorHandler(args =>
+                {
+                    Assert.True(args.Exception.Data.Contains("Comment"));
+                    Assert.Equal("Test", args.Exception.Data["Comment"]);
+                    return Task.CompletedTask;
+                })
+                .Take(TimeSpan.FromMilliseconds(300))
+                .LastOrDefaultAsync();
+        }
     }
 }

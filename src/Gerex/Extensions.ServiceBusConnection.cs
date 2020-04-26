@@ -97,7 +97,6 @@
                         }
 
                         await _errorHandler.Invoke(args);
-
                     }));
                 return Disposable.Create(() => client.CloseAsync().GetAwaiter().GetResult());
             }
