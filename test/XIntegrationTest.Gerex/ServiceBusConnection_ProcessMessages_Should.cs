@@ -4,7 +4,6 @@ namespace Gerex
 {
     using System;
     using System.Diagnostics;
-    using System.Reactive;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Text;
