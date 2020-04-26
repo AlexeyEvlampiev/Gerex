@@ -1,6 +1,7 @@
 ﻿namespace Gerex
 {
     using System;
+    using System.Diagnostics;
     using System.Reactive;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
@@ -11,6 +12,7 @@
 
     public static partial class Extensions
     {
+        [DebuggerStepThrough]
         public static IHandlerRegistration<T> ProcessMessages<T>(this ServiceBusConnection self,
             Func<Message, CancellationToken, IObservable<T>> handler)
         {
@@ -19,6 +21,7 @@
             return new Builder<T>(self, handler);
         }
 
+        [DebuggerStepThrough]
         public static IHandlerRegistration<Unit> ProcessMessages(this ServiceBusConnection self,
             Func<Message, CancellationToken, Task> handler)
         {
@@ -33,12 +36,10 @@
             return new Builder<Unit>(self, ProcessAll);
         }
 
-
+        [DebuggerStepThrough]
         public static IHandlerRegistration<T> ProcessMessages<T>(this ServiceBusConnection self,
             Func<Message, CancellationToken, Task<T>> handler)
         {
-            if (self == null) throw new ArgumentNullException(nameof(self));
-            if (handler == null) throw new ArgumentNullException(nameof(handler));
             if (self == null) throw new ArgumentNullException(nameof(self));
             if (handler == null) throw new ArgumentNullException(nameof(handler));
 
@@ -73,7 +74,7 @@
             private readonly MessageHandlerReducedOptions _reducedOptions = new MessageHandlerReducedOptions();
 
 
-
+            [DebuggerStepThrough]
             public Builder(
                 ServiceBusConnection connection, 
                 Func<Message, CancellationToken, IObservable<T>> handler)
@@ -82,6 +83,8 @@
                 _messageHandler = handler ?? throw new ArgumentNullException(nameof(handler));
             }
 
+
+            [DebuggerStepThrough]
             ISubscriptionRegistration<T> IHandlerRegistration<T>.FromSubscription(
                 string topic, 
                 string subscription, 
@@ -93,13 +96,14 @@
             }
 
 
-
+            [DebuggerStepThrough]
             public IObservable<T> WithErrorHandler(Func<ExceptionReceivedEventArgs, Task> handler)
             {
                 _errorHandler = handler;
                 return this;
             }
 
+            [DebuggerStepThrough]
             IObservable<T> ISubscriptionRegistration<T>.WithOptions(Action<MessageHandlerReducedOptions> config)
             {
                 config?.Invoke(_reducedOptions);
@@ -128,6 +132,7 @@
                         await _messageHandler
                             .Invoke(message, token)
                             .Do(observer.OnNext)
+                            .Do(i=> token.ThrowIfCancellationRequested())
                             .LastOrDefaultAsync();
                     }, options);
 
