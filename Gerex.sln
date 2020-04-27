@@ -11,6 +11,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XUnitTest.Gerex", "test\XUn
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XIntegrationTest.Gerex", "test\XIntegrationTest.Gerex\XIntegrationTest.Gerex.csproj", "{545716ED-8CC0-4B1C-B64A-558FE0586D11}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{559E2D99-C7F0-4F51-A191-FBA212E85BF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples.Gerex", "samples\Samples.Gerex\Samples.Gerex.csproj", "{3DB28885-00F0-4854-B79A-A941FD9E4563}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +33,10 @@ Global
 		{545716ED-8CC0-4B1C-B64A-558FE0586D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{545716ED-8CC0-4B1C-B64A-558FE0586D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{545716ED-8CC0-4B1C-B64A-558FE0586D11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DB28885-00F0-4854-B79A-A941FD9E4563}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DB28885-00F0-4854-B79A-A941FD9E4563}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DB28885-00F0-4854-B79A-A941FD9E4563}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DB28885-00F0-4854-B79A-A941FD9E4563}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -36,6 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{435B525B-B259-453A-9FE7-182D69DCEA40} = {2606972B-C937-4442-8802-DF4F7A9EDCF5}
 		{545716ED-8CC0-4B1C-B64A-558FE0586D11} = {2606972B-C937-4442-8802-DF4F7A9EDCF5}
+		{3DB28885-00F0-4854-B79A-A941FD9E4563} = {559E2D99-C7F0-4F51-A191-FBA212E85BF1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {64C3BD77-C618-4ABF-A719-59C7C86D393B}

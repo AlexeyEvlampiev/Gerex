@@ -339,3 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /test/XIntegrationTest.Gerex/appsettings.json
+/samples/Samples.Gerex/Properties/launchSettings.json
