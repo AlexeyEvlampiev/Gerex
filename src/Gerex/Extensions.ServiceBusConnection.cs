@@ -67,7 +67,7 @@
         }
 
 
-        sealed class Builder<T> : ObservableBase<T>, IHandlerRegistration<T>, IReceiverRegistration<T>
+        sealed partial class Builder<T> : ObservableBase<T>, IHandlerRegistration<T>, IReceiverRegistration<T>
         {
             private readonly ServiceBusConnection _connection;
             private Func<IReceiverClient> _receiverClientFactory;

@@ -38,13 +38,13 @@ namespace Samples.Gerex
 
             await topicClient
                 .SendAsync(new Message(Encoding.UTF8.GetBytes($"This message has been sent to {TopicName}")));
-            await connection
+            await topicClient
                 .ProcessMessages(async (message, token) =>
                 {
                     var text = Encoding.UTF8.GetString(message.Body);
                     Console.WriteLine(text);
                 })
-                .FromSubscription(TopicName, SubscriptionName, ReceiveMode.PeekLock)
+                .FromSubscription(SubscriptionName, ReceiveMode.PeekLock)
                 .FirstOrDefaultAsync();
 
             await Observable.Range(0, 3).Do(_ => Console.WriteLine());

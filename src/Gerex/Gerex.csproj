@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Authors>Alexey Evlampiev</Authors>
+    <Description>Reactive extensions for Azure Service Bus .NET client</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/AlexeyEvlampiev/Gerex</PackageProjectUrl>
+    <PackageTags>Azure, Service Bus, Reactive, Extensions, Fluent, Linq</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
